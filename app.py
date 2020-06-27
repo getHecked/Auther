@@ -4,6 +4,16 @@ import qrcode
 import urllib.request
 from flask import *
 from werkzeug.utils import secure_filename
+from random import randint
+import sqlite3
+from sqlite3 import Error
+
+conn = None
+try:
+    conn = sqlite3.connect("information")
+    print(sqlite3.version)
+except Error as e:
+    print(e)
 
 
 app = Flask(__name__)
@@ -56,6 +66,19 @@ def return_file(filename):
 @app.route('/download/display_qr/<filename>/<qr_filename>', methods = ['GET'])
 def display_qr(filename, qr_filename):
     return render_template('qr_display.html', qr_path=f'/static/qrcodes/{qr_filename}_qr_code.png', download_url = str(request.host_url) + 'download/' + filename)
+
+@app.route('/first_auth',methods=['POST'])
+def first_auth(token):
+    time = time.time()
+    otp = ''
+    sql = ''' INSERT INTO codes (time,username,otp)
+              VALUES(?,?,?) '''
+    for _ in range(6):
+        otp += randint(0, 10)
+    temp_values = (time,token,otp)
+    cur = conn.cursor()
+    cur.execute(sql, temp_values)
+
 
 
 if __name__ == "__main__":
